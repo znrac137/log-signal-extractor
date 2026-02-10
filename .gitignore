@@ -37,3 +37,7 @@ Thumbs.db
 *.log
 *.json
 !sample_auth.log
+
+# But DO track GitHub workflows
+!.github/
+

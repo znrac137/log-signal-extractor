@@ -1,8 +1,24 @@
 # Log Signal Extractor
 
+[![CI](https://github.com/znrac137/log-signal-extractor/actions/workflows/ci.yml/badge.svg)](https://github.com/znrac137/log-signal-extractor/actions)
+
 Ever wonder what's actually happening in your SSH logs? This tool digs through auth.log files and finds the real problems—brute force attacks, password spraying, and when someone finally cracks an account.
 
-## What This Does
+## ⚡ Quickstart
+
+```bash
+# Clone and run
+git clone https://github.com/znrac137/log-signal-extractor.git
+cd log-signal-extractor
+python main.py logs/sample_auth.log --verbose
+
+# Save alerts to JSON
+python main.py logs/sample_auth.log --output alerts.json
+```
+
+That's it. No dependencies to install.
+
+## Why I Built This
 
 It parses your auth.log and hunts for suspicious patterns. When it finds something sketchy, it spits out detailed JSON alerts so you know exactly what happened and when.
 
@@ -20,8 +36,8 @@ It parses your auth.log and hunts for suspicious patterns. When it finds somethi
 
 ### Installation
 ```bash
-git clone <repository>
-cd Log\ Signal\ Extractor
+git clone https://github.com/znrac137/log-signal-extractor.git
+cd log-signal-extractor
 ```
 
 ## Using It
@@ -54,6 +70,41 @@ optional arguments:
   -h, --help           show this help message and exit
   -o, --output OUTPUT  Output file for JSON alerts (default: stdout)
   -v, --verbose        Enable verbose output
+```
+
+### Sample Terminal Output
+
+```
+[*] Parsing log file: logs/sample_auth.log
+[+] Extracted 30 authentication events
+[*] Running security detection algorithms...
+
+============================================================
+ALERT: BRUTE_FORCE_ATTACK (HIGH)
+  Source IP: 192.168.1.100
+  Failed attempts: 8
+  Usernames targeted: admin, root, postgres, test
+  Time window: 10 minutes
+============================================================
+
+ALERT: PASSWORD_SPRAY_ATTACK (HIGH)
+  Source IP: 192.168.1.101
+  Unique usernames: 6
+  Common password detected
+============================================================
+
+ALERT: SUCCESS_AFTER_FAILURES (CRITICAL)
+  Source IP: 192.168.1.100
+  Username: root
+  Failed attempts before success: 7
+  ⚠️ Potential account compromise
+============================================================
+
+Analysis Complete
+  Events analyzed: 30
+  Alerts detected: 3
+    CRITICAL: 1
+    HIGH: 2
 ```
 
 ## What You Get Back
@@ -192,12 +243,44 @@ detector = SuspiciousActivityDetector(config={
 })
 ```
 
+### Example: Stricter Detection (catch more)
+```python
+detector = SuspiciousActivityDetector(config={
+    "failed_login_threshold": 3,        # Alert after just 3 failures
+    "password_spray_threshold": 2,      # Alert on 2+ users targeted
+    "time_window_minutes": 5,           # Tighter 5-minute window
+})
+```
+
+### Example: Looser Detection (fewer false positives)
+```python
+detector = SuspiciousActivityDetector(config={
+    "failed_login_threshold": 10,       # Only alert after 10 failures
+    "password_spray_threshold": 5,      # Need 5+ users targeted
+    "time_window_minutes": 15,          # Wider 15-minute window
+})
+```
+
+Then just run it normally:
+```bash
+python main.py logs/sample_auth.log --output alerts.json
+```
+
 ## Things to Keep in Mind
 
 - **False Positives**: Sometimes legitimate users trigger alerts if their VPN drops or they forget their password
 - **Tuning**: Adjust the thresholds based on what's normal in your environment
 - **Log Rotation**: Make sure your auth.log is being kept around long enough to analyze
 - **Scale It Up**: If you're running this in production, consider using a log aggregation tool like ELK or Splunk
+
+## Limitations
+
+- **Timestamp Format**: The parser expects standard syslog format. Some systems may have different formats
+- **Year Information**: Standard auth.log doesn't include year in timestamps, so alerts use the current year (can cause issues with logs spanning calendar years)
+- **Log Rotation**: If logs are rotated/compressed, you'll need to decompress and pass individual files
+- **Real-time Analysis**: Current version processes static files. For real-time streaming, needs integration with log ingestion tools
+- **Geographic Anomalies**: Doesn't detect impossible travel or unusual access patterns (yet)
+- **Account Context**: Doesn't know which accounts are service accounts vs. human users
 
 ## Want to Contribute?
 

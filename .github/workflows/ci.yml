@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Run basic syntax check
+      run: |
+        python -m py_compile main.py
+        python -m py_compile extractor/*.py
+
+    - name: Run sample analysis
+      run: |
+        python main.py logs/sample_auth.log --verbose
+
+    - name: Generate alerts
+      run: |
+        python main.py logs/sample_auth.log --output test_alerts.json
+        echo "✅ Test alerts generated successfully"
+        cat test_alerts.json | head -20
