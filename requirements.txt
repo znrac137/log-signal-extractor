@@ -1,0 +1,5 @@
+# Requirements
+
+This project uses only the Python standard library - no external dependencies required.
+
+Python version: 3.8+
