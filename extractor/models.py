@@ -6,7 +6,7 @@ These are the main data types the extractor works with - parsed log entries and 
 
 from dataclasses import dataclass, asdict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 
@@ -81,11 +81,11 @@ class Alert:
     alert_type: str
     severity: AlertSeverity
     source_ip: str
-    affected_usernames: list[str]
+    affected_usernames: List[str]
     event_count: int
     timestamp: datetime
     description: str
-    events: list[LogEvent]
+    events: List[LogEvent]
 
     def to_dict(self) -> dict:
         """Turn the alert into a dict so it can be output as JSON."""
